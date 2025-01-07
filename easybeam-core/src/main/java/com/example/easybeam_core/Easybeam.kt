@@ -22,18 +22,18 @@ class Easybeam(private val config: EasyBeamConfig) {
         .build()
 
     // Public methods for streaming
-    fun streamPortal(
-        portalId: String,
+    fun streamPrompt(
+        promptId: String,
         userId: String?,
         filledVariables: Map<String, String>,
         messages: List<ChatMessage>,
-        onNewResponse: (PortalResponse) -> Unit,
+        onNewResponse: (ChatResponse) -> Unit,
         onClose: () -> Unit,
         onError: (Throwable) -> Unit
     ): () -> Unit {
         return streamEndpoint(
-            endpoint = "portal",
-            id = portalId,
+            endpoint = "prompt",
+            id = promptId,
             userId = userId,
             filledVariables = filledVariables,
             messages = messages,
@@ -43,18 +43,18 @@ class Easybeam(private val config: EasyBeamConfig) {
         )
     }
 
-    fun streamWorkflow(
-        workflowId: String,
+    fun streamAgent(
+        agentId: String,
         userId: String?,
         filledVariables: Map<String, String>,
         messages: List<ChatMessage>,
-        onNewResponse: (PortalResponse) -> Unit,
+        onNewResponse: (ChatResponse) -> Unit,
         onClose: () -> Unit,
         onError: (Throwable) -> Unit
     ): () -> Unit {
         return streamEndpoint(
-            endpoint = "workflow",
-            id = workflowId,
+            endpoint = "agent",
+            id = agentId,
             userId = userId,
             filledVariables = filledVariables,
             messages = messages,
@@ -71,7 +71,7 @@ class Easybeam(private val config: EasyBeamConfig) {
         userId: String?,
         filledVariables: Map<String, String>,
         messages: List<ChatMessage>,
-        onNewResponse: (PortalResponse) -> Unit,
+        onNewResponse: (ChatResponse) -> Unit,
         onClose: () -> Unit,
         onError: (Throwable) -> Unit
     ): () -> Unit {
@@ -81,7 +81,7 @@ class Easybeam(private val config: EasyBeamConfig) {
             val bodyJson = JSONObject().apply {
                 put("variables", JSONObject(filledVariables))
                 put("messages", JSONArray(messages.map { it.toJson() }))
-                put("stream", true) // Changed to boolean
+                put("stream", true)
                 userId?.let { put("userId", it) }
             }
 
@@ -114,8 +114,8 @@ class Easybeam(private val config: EasyBeamConfig) {
                         } else {
                             try {
                                 val jsonResponse = JSONObject(data)
-                                val portalResponse = PortalResponse.fromJson(jsonResponse)
-                                onNewResponse(portalResponse)
+                                val chatResponse = ChatResponse.fromJson(jsonResponse)
+                                onNewResponse(chatResponse)
                             } catch (e: Exception) {
                                 onError(Exception("Failed to parse response: ${e.message}", e))
                             }
@@ -156,27 +156,27 @@ class Easybeam(private val config: EasyBeamConfig) {
         }
     }
 
-    suspend fun getPortal(
-        portalId: String,
+    suspend fun getPrompt(
+        promptId: String,
         userId: String?,
         filledVariables: Map<String, String>,
         messages: List<ChatMessage>
-    ): PortalResponse = getEndpoint(
-        endpoint = "portal",
-        id = portalId,
+    ): ChatResponse = getEndpoint(
+        endpoint = "prompt",
+        id = promptId,
         userId = userId,
         filledVariables = filledVariables,
         messages = messages
     )
 
-    suspend fun getWorkflow(
-        workflowId: String,
+    suspend fun getAgent(
+        agentId: String,
         userId: String?,
         filledVariables: Map<String, String>,
         messages: List<ChatMessage>
-    ): PortalResponse = getEndpoint(
-        endpoint = "workflow",
-        id = workflowId,
+    ): ChatResponse = getEndpoint(
+        endpoint = "agent",
+        id = agentId,
         userId = userId,
         filledVariables = filledVariables,
         messages = messages
@@ -188,7 +188,7 @@ class Easybeam(private val config: EasyBeamConfig) {
         userId: String?,
         filledVariables: Map<String, String>,
         messages: List<ChatMessage>
-    ): PortalResponse = suspendCancellableCoroutine { continuation ->
+    ): ChatResponse = suspendCancellableCoroutine { continuation ->
         val url = "$baseUrl/$endpoint/$id"
 
         val bodyJson = JSONObject().apply {
@@ -233,8 +233,8 @@ class Easybeam(private val config: EasyBeamConfig) {
                         if (responseBody != null) {
                             try {
                                 val jsonResponse = JSONObject(responseBody)
-                                val portalResponse = PortalResponse.fromJson(jsonResponse)
-                                continuation.resume(portalResponse)
+                                val chatResponse = ChatResponse.fromJson(jsonResponse)
+                                continuation.resume(chatResponse)
                             } catch (e: Exception) {
                                 continuation.resumeWithException(e)
                             }
