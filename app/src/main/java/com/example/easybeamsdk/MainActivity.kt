@@ -82,8 +82,8 @@ class MainActivity : AppCompatActivity() {
             cancelStream?.invoke()
 
             // Start new stream
-            cancelStream = easybeam.streamPortal(
-                portalId = "lMID3",
+            cancelStream = easybeam.streamPrompt(
+                promptId = "lMID3",
                 userId = "test-user",
                 filledVariables = mapOf("test" to "value"),
                 messages = messages.toList(),

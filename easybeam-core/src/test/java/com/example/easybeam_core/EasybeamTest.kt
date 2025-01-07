@@ -14,7 +14,9 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.UUID
 
+import org.robolectric.annotation.Config
 
+@Config(manifest = Config.NONE)
 class EasybeamTest {
     private lateinit var mockWebServer: MockWebServer
     private lateinit var easybeam: Easybeam
@@ -53,7 +55,7 @@ class EasybeamTest {
     private fun createMockResponseJson(streamFinished: Boolean = false): String {
         val messageJson = JSONObject().apply {
             put("content", "Test response")
-            put("role", "ASSISTANT")
+            put("role", "AI")
             put("createdAt", DateTimeFormatter.ISO_INSTANT.format(Instant.now()))
             put("id", UUID.randomUUID().toString())
             put("providerId", "test-provider")
@@ -148,10 +150,15 @@ class EasybeamTest {
         val latch = CountDownLatch(1)
         var success = false
 
+        // Create the JSON response first
+        val mockResponseBody = JSONObject().apply {
+            put("status", "success")
+        }.toString()
+
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(200)
-                .setBody("{}")
+                .setBody(mockResponseBody)
         )
 
         easybeam.review(

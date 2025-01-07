@@ -64,7 +64,6 @@ class Easybeam(private val config: EasyBeamConfig) {
         )
     }
 
-    // Private streaming implementation
     private fun streamEndpoint(
         endpoint: String,
         id: String,
@@ -109,7 +108,6 @@ class Easybeam(private val config: EasyBeamConfig) {
                         data: String
                     ) {
                         if (data.trim() == "[DONE]") {
-                            onClose()
                             eventSource.cancel()
                         } else {
                             try {
@@ -118,6 +116,7 @@ class Easybeam(private val config: EasyBeamConfig) {
                                 onNewResponse(chatResponse)
                             } catch (e: Exception) {
                                 onError(Exception("Failed to parse response: ${e.message}", e))
+                                eventSource.cancel()
                             }
                         }
                     }
@@ -149,12 +148,18 @@ class Easybeam(private val config: EasyBeamConfig) {
                 }
             )
 
-            return { eventSource.cancel() }
+            return {
+                eventSource.cancel()
+                // Ensure onClose is called when manually cancelled
+                onClose()
+            }
         } catch (e: Exception) {
             onError(Exception("Failed to initialize stream: ${e.message}", e))
+            onClose() // Ensure onClose is called even if initialization fails
             return {}
         }
     }
+
 
     suspend fun getPrompt(
         promptId: String,

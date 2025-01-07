@@ -47,4 +47,7 @@ dependencies {
     implementation(libs.okhttp.sse)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.json) // Real JSON implementation for tests
+    testImplementation(libs.robolectric) // Android environment simulation
+    testImplementation(libs.androidx.core)
 }
