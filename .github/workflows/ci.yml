@@ -1,0 +1,49 @@
+name: Run Tests on PR
+
+# This workflow is triggered on pull requests to the 'develop' and 'main' branches.
+on:
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v2
+      with:
+        java-version: '17'
+        distribution: 'adopt'
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build with Gradle
+      run: ./gradlew build
+
+    - name: Run Tests
+      run: ./gradlew test
+
+    - name: Upload Test Report
+      id: artifact-upload-step
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-report
+        path: |
+          build/reports/tests/test/index.html
+
+    - name: Post comment with link to Test Report
+      if: failure()
+      uses: peter-evans/create-or-update-comment@v1
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        body: |
+          :x: Tests failed. You can view the test report [here](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+          Please check the 'Artifacts' section in the top right corner to download the detailed test report.
+        token: ${{ secrets.GITHUB_TOKEN }}
+

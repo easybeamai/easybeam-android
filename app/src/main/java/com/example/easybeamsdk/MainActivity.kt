@@ -66,41 +66,35 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // In MainActivity.kt
     private fun sendMessage() {
         val messageText = messageInput.text.toString().trim()
         if (messageText.isNotEmpty()) {
-            // Add user message to the chat
-            val userMessage = ChatMessage(role = ChatRole.USER, content = messageText, createdAt = ChatMessage.getCurrentTimestamp(), id = UUID.randomUUID().toString())
+            val userMessage = ChatMessage(
+                role = ChatRole.USER,
+                content = messageText,
+                createdAt = ChatMessage.getCurrentTimestamp(),
+                id = UUID.randomUUID().toString()
+            )
             messages.add(userMessage)
             messagesAdapter.notifyItemInserted(messages.size - 1)
             recyclerView.scrollToPosition(messages.size - 1)
 
-            // Clear input
             messageInput.text.clear()
-
-            // Cancel any existing stream
             cancelStream?.invoke()
 
-            // Start new stream
-            cancelStream = easybeam.streamPortal(
-                portalId = "lMID3",
+            cancelStream = easybeam.streamPrompt(
+                promptId = "G6r5M",
                 userId = "test-user",
                 filledVariables = mapOf("test" to "value"),
                 messages = messages.toList(),
                 onNewResponse = { response ->
-                    Log.d("Stream", "New response: $response")
                     runOnUiThread {
-                        println("Added message ${messages.size}")
-                        val existingMessageIndex = messages.indexOfFirst {
-                            it.id == response.newMessage.id
-                        }
-
+                        val existingMessageIndex = messages.indexOfFirst { it.id == response.newMessage.id }
                         if (existingMessageIndex != -1) {
-                            // Update existing message
                             messages[existingMessageIndex] = response.newMessage
                             messagesAdapter.notifyItemChanged(existingMessageIndex)
                         } else {
-                            // Add new message
                             messages.add(response.newMessage)
                             messagesAdapter.notifyItemInserted(messages.size - 1)
                         }
@@ -113,6 +107,12 @@ class MainActivity : AppCompatActivity() {
                 onError = { error ->
                     Log.e("Stream", "Error: ", error)
                     runOnUiThread {
+                        messages.add(ChatMessage(
+                            role = ChatRole.AI,
+                            content = "Error: ${error.message}",
+                            createdAt = ChatMessage.getCurrentTimestamp(),
+                            id = UUID.randomUUID().toString()
+                        ))
                         messagesAdapter.notifyItemInserted(messages.size - 1)
                         recyclerView.scrollToPosition(messages.size - 1)
                     }
